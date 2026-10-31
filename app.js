@@ -274,7 +274,14 @@ function setupRdcPlayerSelector() {
   const filterInput = document.getElementById('rdc-player-filter');
   filterInput.addEventListener('input', () => renderRdcPlayers(filterInput.value));
   document.getElementById('rdc-analyze-btn').addEventListener('click', analyzeSelectedRdcPlayers);
+  document.getElementById('rdc-clear-selection-btn').addEventListener('click', clearRdcSelection);
   renderRdcPlayers();
+}
+
+function clearRdcSelection() {
+  rdcState.selectedIds.clear();
+  renderRdcPlayers(document.getElementById('rdc-player-filter').value);
+  document.getElementById('rdc-selection-message').textContent = 'Selecione 5 jogadores.';
 }
 
 function renderRdcPlayers(filter = '') {
@@ -544,7 +551,7 @@ async function handleSearch() {
         ? Math.min(100, Math.round((best.teamScore + Math.min(6, (players.length - 1) * 3)) * 10) / 10)
         : best.score;
       const tier = getTeamBanTier(best, score);
-      return { ...item, players, best, score, tier };
+      return { ...item, allPlayers: rankedPlayers, players, best, score, tier };
     }).sort((a, b) => b.score - a.score || b.players.length - a.players.length);
 
     const modeLabel = teamState.scoreMode === 'strict' ? 'Régua de equipe rígida' : 'Régua individual';
@@ -614,11 +621,12 @@ async function handleSearch() {
     const bansContainer = document.getElementById('team-summary-bans');
     bansContainer.innerHTML = topBans.length ? topBans.map((item, index) => {
       const name = item.hero.localized_name || `Herói #${item.hero.id}`;
+      const mostPlayed = getMostPlayedTeamPlayer(item);
       return `<div class="flex items-center justify-between gap-2 p-2 rounded-lg bg-slate-900/60 border border-slate-800">
         <div class="flex items-center gap-2 min-w-0">
           <span class="font-bold font-dota text-slate-500">${index + 1}</span>
           <img src="${getHeroImageUrl(item.hero.name)}" alt="${escapeHtml(name)}" class="w-14 h-8 rounded object-cover border border-slate-700" onerror="this.src='https://via.placeholder.com/56/1e293b/ffffff?text=Dota'">
-          <div class="min-w-0"><div class="font-semibold text-slate-100 truncate">${escapeHtml(name)}</div><div class="text-[11px] text-slate-400">${formatPositions(item.best.positions)} • ${item.best.games} jogos • ${item.best.winrate.toFixed(0)}% WR</div></div>
+          <div class="min-w-0"><div class="font-semibold text-slate-100 truncate">${escapeHtml(name)}</div><div class="text-[11px] text-slate-400">${formatPositions(item.best.positions)} • ${item.best.games} jogos • ${item.best.winrate.toFixed(0)}% WR</div><div class="text-[10px] text-slate-500 truncate">Mais joga: ${escapeHtml(mostPlayed.name)}</div></div>
         </div>
         <div class="text-right shrink-0"><div class="text-sm font-bold text-red-400">${item.score} pts</div><span class="text-[9px] px-1.5 py-0.5 rounded ${item.tier.badgeClass}">${item.tier.label}</span></div>
       </div>`;
@@ -627,12 +635,12 @@ async function handleSearch() {
     const byGames = [...heroes].sort((a, b) => b.best.games - a.best.games);
     const spammed = byGames[0];
     document.getElementById('team-summary-spammed').innerHTML = spammed
-      ? `<div class="flex items-center gap-2"><img src="${getHeroImageUrl(spammed.hero.name)}" class="w-14 h-8 rounded object-cover border border-slate-700"><div><div class="font-bold text-slate-100">${escapeHtml(spammed.hero.localized_name)}</div><div class="text-xs text-amber-400 font-semibold">${spammed.best.games} partidas</div><div class="text-[11px] text-slate-400">${spammed.best.wins}V - ${spammed.best.losses}D • ${spammed.best.winrate.toFixed(0)}% WR</div></div></div>`
+      ? `<div class="flex items-center gap-2"><img src="${getHeroImageUrl(spammed.hero.name)}" class="w-14 h-8 rounded object-cover border border-slate-700"><div><div class="font-bold text-slate-100">${escapeHtml(spammed.hero.localized_name)}</div><div class="text-xs text-amber-400 font-semibold">${spammed.best.games} partidas</div><div class="text-[11px] text-slate-400">${spammed.best.wins}V - ${spammed.best.losses}D • ${spammed.best.winrate.toFixed(0)}% WR</div><div class="text-[10px] text-slate-500">Mais joga: ${escapeHtml(getMostPlayedTeamPlayer(spammed).name)}</div></div></div>`
       : '<span class="text-xs text-slate-400">Nenhum</span>';
 
     const bestWinrate = heroes.filter(item => item.best.games >= 3).sort((a, b) => b.best.winrate - a.best.winrate || b.best.games - a.best.games)[0];
     document.getElementById('team-summary-winrate').innerHTML = bestWinrate
-      ? `<div class="flex items-center gap-2"><img src="${getHeroImageUrl(bestWinrate.hero.name)}" class="w-14 h-8 rounded object-cover border border-slate-700"><div><div class="font-bold text-slate-100">${escapeHtml(bestWinrate.hero.localized_name)}</div><div class="text-xs text-emerald-400 font-bold">${bestWinrate.best.winrate.toFixed(1)}% WR</div><div class="text-[11px] text-slate-400">${bestWinrate.best.games} jogos (${bestWinrate.best.wins}V - ${bestWinrate.best.losses}D)</div></div></div>`
+      ? `<div class="flex items-center gap-2"><img src="${getHeroImageUrl(bestWinrate.hero.name)}" class="w-14 h-8 rounded object-cover border border-slate-700"><div><div class="font-bold text-slate-100">${escapeHtml(bestWinrate.hero.localized_name)}</div><div class="text-xs text-emerald-400 font-bold">${bestWinrate.best.winrate.toFixed(1)}% WR</div><div class="text-[11px] text-slate-400">${bestWinrate.best.games} jogos (${bestWinrate.best.wins}V - ${bestWinrate.best.losses}D)</div><div class="text-[10px] text-slate-500">Mais joga: ${escapeHtml(getMostPlayedTeamPlayer(bestWinrate).name)}</div></div></div>`
       : '<span class="text-xs text-slate-400">Nenhum com 3 jogos</span>';
 
     const totalGames = teamState.players.reduce((sum, player) => sum + player.heroStats.reduce((heroSum, stat) => heroSum + stat.games, 0), 0);
@@ -646,6 +654,14 @@ async function handleSearch() {
       <div class="bg-slate-900/60 p-2 rounded border border-slate-800"><div class="text-lg font-bold text-amber-400">${totalWins}</div><div class="text-[11px] text-slate-400">Vitórias</div></div>
       <div class="bg-slate-900/60 p-2 rounded border border-slate-800"><div class="text-lg font-bold text-sky-400">${totalHeroes}</div><div class="text-[11px] text-slate-400">Heróis</div></div>
     </div>`;
+  }
+
+  function getMostPlayedTeamPlayer(item) {
+    return (item.allPlayers || item.players).reduce((mostPlayed, player) => (
+      player.games > mostPlayed.games || (player.games === mostPlayed.games && player.score > mostPlayed.score)
+        ? player
+        : mostPlayed
+    ), item.players[0]);
   }
 
   function renderTeamHighConfidenceTable(heroes) {
