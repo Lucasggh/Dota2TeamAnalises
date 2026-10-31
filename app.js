@@ -259,6 +259,10 @@ function setupTeamEventListeners() {
       teamState.scoreMode = e.target.value;
       if (teamState.players.length > 0) renderTeamResults();
     });
+    const exportTeamBtn = document.getElementById('export-team-high-confidence-csv-btn');
+    if (exportTeamBtn) {
+      exportTeamBtn.addEventListener('click', exportTeamHighConfidenceCSV);
+    }
     setupRdcPlayerSelector();
 }
 
@@ -554,6 +558,8 @@ async function handleSearch() {
       return { ...item, allPlayers: rankedPlayers, players, best, score, tier };
     }).sort((a, b) => b.score - a.score || b.players.length - a.players.length);
 
+    teamState.heroes = heroes;
+
     const modeLabel = teamState.scoreMode === 'strict' ? 'Régua de equipe rígida' : 'Régua individual';
     document.getElementById('team-results-subtitle').textContent =
       `${modeLabel} • ${teamState.players.length} jogadores • Até ${teamState.matchesLimit} partidas por jogador • Últimos ${teamState.months} meses`;
@@ -723,6 +729,60 @@ async function handleSearch() {
         <td class="py-3 px-3 text-xs leading-5">${otherPlayers}</td>
       </tr>`;
     }).join('');
+  }
+
+  function exportTeamHighConfidenceCSV() {
+    const highConfidence = (teamState.heroes || []).filter(item => item.score >= 60);
+
+    if (highConfidence.length === 0) {
+      alert('Nenhum herói de alta confiança (score >= 60) encontrado para exportar.');
+      return;
+    }
+
+    let csv = 'Posicao_Ranking;Heroi;Partidas_Amostra;Vitorias;Derrotas;Winrate_Percent;Winrate_Ponderado;Recencia;Ritmo;Confianca_Time;Recomendacao_Ban;Jogador_Principal;Posicoes_Principal;Score_Principal;Jogadores_Secundarios\n';
+
+    highConfidence.forEach((item, index) => {
+      const heroName = item.hero.localized_name || `Herói #${item.hero.id}`;
+      const best = item.best;
+      const rhythm = best.rhythmStatus?.label || 'Sem dados';
+      const lastPlayed = formatRelativeTime(best.lastMatchTime);
+      const mainPositions = best.positions && best.positions.length ? `Pos ${best.positions.join('/')}` : '-';
+
+      const secondaryPlayers = item.players.slice(1).map(p => {
+        const pPos = p.positions && p.positions.length ? `Pos ${p.positions.join('/')}` : '-';
+        return `${p.name} (${pPos}, ${p.score} pts, ${p.games}j, ${p.winrate.toFixed(0)}% WR)`;
+      }).join(' | ') || 'Nenhum';
+
+      const row = [
+        index + 1,
+        `"${heroName}"`,
+        best.games,
+        best.wins,
+        best.losses,
+        best.winrate.toFixed(1),
+        best.weightedWinrate !== undefined ? best.weightedWinrate.toFixed(0) : best.winrate.toFixed(0),
+        `"${lastPlayed}"`,
+        `"${rhythm}"`,
+        item.score,
+        `"${item.tier.label}"`,
+        `"${best.name}"`,
+        `"${mainPositions}"`,
+        best.score,
+        `"${secondaryPlayers}"`
+      ].join(';');
+
+      csv += row + '\n';
+    });
+
+    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    const dateStr = new Date().toISOString().slice(0, 10);
+    link.setAttribute('download', `dota2_scout_time_alta_confianca_${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   function getTeamTemporalProfile(stat) {

@@ -243,7 +243,20 @@
               <h2 class="text-lg font-bold text-white font-dota tracking-wide">Todos os bans e heróis de alta confiança</h2>
               <p class="text-xs text-slate-400 mt-1">Lista completa da equipe com confiança de equipe a partir de 60 pontos.</p>
             </div>
-            <span id="team-high-confidence-count" class="text-xs text-amber-300 bg-amber-950/40 border border-amber-800/50 rounded px-2 py-1"></span>
+            <div class="flex items-center gap-2">
+              <span id="team-high-confidence-count" class="text-xs text-amber-300 bg-amber-950/40 border border-amber-800/50 rounded px-2 py-1"></span>
+              <button
+                id="export-team-high-confidence-csv-btn"
+                type="button"
+                class="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-700 hover:border-slate-600 transition-colors text-xs font-semibold shadow-sm"
+                title="Exportar lista de alta confiança da equipe para planilha CSV"
+              >
+                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <span>Exportar CSV</span>
+              </button>
+            </div>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
