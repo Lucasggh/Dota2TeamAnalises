@@ -600,6 +600,49 @@ async function handleSearch() {
         <td class="py-3 px-3 text-xs leading-5">${playersHtml}</td>
       </tr>`;
     }).join('') : '<tr><td colspan="4" class="text-center py-8 text-slate-400 text-sm">Nenhum herói flex compartilhado entre os jogadores.</td></tr>';
+    renderTeamHighConfidenceTable(heroes);
+  }
+
+  function renderTeamHighConfidenceTable(heroes) {
+    const highConfidence = heroes.filter(item => item.score >= 60);
+    const count = document.getElementById('team-high-confidence-count');
+    const table = document.getElementById('team-high-confidence-table');
+    count.textContent = `${highConfidence.length} herói(s)`;
+
+    if (highConfidence.length === 0) {
+      table.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-400 text-sm">Nenhum herói atingiu 60 pontos de confiança da equipe.</td></tr>';
+      return;
+    }
+
+    table.innerHTML = highConfidence.map((item, index) => {
+      const heroName = item.hero.localized_name || `Herói #${item.hero.id}`;
+      const heroImg = getHeroImageUrl(item.hero.name);
+      const otherPlayers = item.players.slice(1).length > 0
+        ? item.players.slice(1).map(player =>
+          `<div class="text-slate-300">${escapeHtml(player.name)} <span class="text-slate-500">• ${formatPositions(player.positions)} • ${player.score} pts</span></div>`).join('')
+        : '<span class="text-slate-500">Nenhum</span>';
+      return `<tr class="border-b border-slate-800/80 hover:bg-slate-800/40 transition-colors text-sm">
+        <td class="py-3 px-3 text-center font-bold font-dota text-slate-400">#${index + 1}</td>
+        <td class="py-3 px-3">
+          <div class="flex items-center space-x-3">
+            <img src="${heroImg}" alt="${escapeHtml(heroName)}" class="w-14 h-8 shrink-0 rounded aspect-video object-cover border border-slate-700/80 shadow-sm" onerror="this.src='https://via.placeholder.com/56/1e293b/ffffff?text=Dota'">
+            <div class="min-w-0">
+              <div class="font-semibold text-slate-100 whitespace-nowrap">${escapeHtml(heroName)}</div>
+              <div class="text-[11px] text-slate-400">${getPositionsBadgeHtml(item.best.positions)}</div>
+            </div>
+          </div>
+        </td>
+        <td class="py-3 px-3 text-right whitespace-nowrap">
+          <span class="text-base font-bold text-white font-dota bg-slate-900 px-2.5 py-0.5 rounded border border-slate-700">${item.score}</span>
+          <div class="mt-1"><span class="text-[9px] font-bold tracking-wider px-2 py-0.5 rounded uppercase ${item.tier.badgeClass}">${item.tier.label}</span></div>
+        </td>
+        <td class="py-3 px-3 whitespace-nowrap">
+          <div class="font-semibold text-slate-100">${escapeHtml(item.best.name)}</div>
+          <div class="text-[11px] text-slate-500">${formatPositions(item.best.positions)} • ${item.best.score} pts • ${item.best.games}j • ${item.best.winrate.toFixed(0)}% WR</div>
+        </td>
+        <td class="py-3 px-3 text-xs leading-5">${otherPlayers}</td>
+      </tr>`;
+    }).join('');
   }
 
   function getTeamTemporalProfile(stat) {
