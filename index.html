@@ -182,6 +182,31 @@
       </div>
 
       <div id="team-results" class="hidden space-y-6">
+        <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-4">
+          <div class="glass-panel-glow rounded-xl p-4 border border-red-900/40 xl:col-span-5">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold uppercase tracking-wider text-red-400">🚫 Sugestão de Bans</span>
+              <span class="text-[10px] text-slate-400 bg-red-950/80 px-2 py-0.5 rounded border border-red-900/50">Top Confiança</span>
+            </div>
+            <div id="team-summary-bans" class="space-y-2"></div>
+            <p class="text-[11px] text-slate-500 mt-2.5 pt-2 border-t border-red-950/40">Heróis recomendados para anular no primeiro draft.</p>
+          </div>
+          <div class="glass-panel rounded-xl p-4 border border-slate-800 xl:col-span-2">
+            <div class="flex items-center justify-between mb-3"><span class="text-xs font-bold uppercase tracking-wider text-amber-400">🎯 Mais Spammado</span><span class="text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">Volume</span></div>
+            <div id="team-summary-spammed"></div>
+            <p class="text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-800/80">Maior repetição somada da equipe.</p>
+          </div>
+          <div class="glass-panel rounded-xl p-4 border border-slate-800 xl:col-span-2">
+            <div class="flex items-center justify-between mb-3"><span class="text-xs font-bold uppercase tracking-wider text-emerald-400">🔥 Maior Winrate</span><span class="text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">Mín. 3 Jogos</span></div>
+            <div id="team-summary-winrate"></div>
+            <p class="text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-800/80">Melhor eficiência com volume relevante.</p>
+          </div>
+          <div class="glass-panel rounded-xl p-4 border border-slate-800 xl:col-span-3">
+            <div class="flex items-center justify-between mb-3"><span class="text-xs font-bold uppercase tracking-wider text-sky-400">📊 Panorama da Equipe</span><span id="team-summary-period" class="text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded"></span></div>
+            <div id="team-summary-overview"></div>
+            <p class="text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-800/80">Volume, vitórias e pool combinados.</p>
+          </div>
+        </section>
         <section class="glass-panel rounded-xl p-5 border border-slate-800">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
             <div>
