@@ -522,6 +522,9 @@ async function handleSearch() {
           temporal: getTeamTemporalProfile(stat),
           games: stat.games,
           winrate: stat.winrate,
+          weightedWinrate: stat.weightedWinrate,
+          lastMatchTime: stat.lastMatchTime,
+          rhythmStatus: stat.rhythmStatus,
           wins: stat.wins,
           losses: stat.losses,
           tier: stat.banTier
@@ -612,7 +615,7 @@ async function handleSearch() {
     count.textContent = `${highConfidence.length} herói(s)`;
 
     if (highConfidence.length === 0) {
-      table.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-400 text-sm">Nenhum herói atingiu 60 pontos de confiança da equipe.</td></tr>';
+      table.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-slate-400 text-sm">Nenhum herói atingiu 60 pontos de confiança da equipe.</td></tr>';
       return;
     }
 
@@ -621,8 +624,10 @@ async function handleSearch() {
       const heroImg = getHeroImageUrl(item.hero.name);
       const otherPlayers = item.players.slice(1).length > 0
         ? item.players.slice(1).map(player =>
-          `<div class="text-slate-300">${escapeHtml(player.name)} <span class="text-slate-500">• ${formatPositions(player.positions)} • ${player.score} pts</span></div>`).join('')
+          `<div class="text-[11px] text-slate-400 leading-4">${escapeHtml(player.name)} <span class="text-slate-500">• ${formatPositions(player.positions)} • ${player.score} pts</span></div>`).join('')
         : '<span class="text-slate-500">Nenhum</span>';
+      const best = item.best;
+      const rhythm = best.rhythmStatus || { label: 'Sem dados', class: 'bg-slate-900 text-slate-400 border border-slate-700' };
       return `<tr class="border-b border-slate-800/80 hover:bg-slate-800/40 transition-colors text-sm">
         <td class="py-3 px-3 text-center font-bold font-dota text-slate-400">#${index + 1}</td>
         <td class="py-3 px-3">
@@ -634,13 +639,30 @@ async function handleSearch() {
             </div>
           </div>
         </td>
+        <td class="py-3 px-3 text-center font-semibold text-slate-200 whitespace-nowrap">
+          <span class="text-base">${best.games}</span>
+          <div class="text-[10px] text-slate-500">jogos analisados</div>
+        </td>
+        <td class="py-3 px-3 text-center whitespace-nowrap">
+          <span class="text-emerald-400 font-semibold">${best.wins}V</span>
+          <span class="text-slate-600"> - </span>
+          <span class="text-rose-400 font-semibold">${best.losses}D</span>
+        </td>
+        <td class="py-3 px-3 whitespace-nowrap">
+          <div class="font-bold ${best.winrate >= 50 ? 'text-emerald-400' : 'text-rose-400'}">${best.winrate.toFixed(1)}%</div>
+          <div class="text-[10px] text-slate-500">pond: ${best.weightedWinrate.toFixed(0)}%</div>
+        </td>
+        <td class="py-3 px-3 whitespace-nowrap">
+          <div class="text-xs text-slate-200">${formatRelativeTime(best.lastMatchTime)}</div>
+          <span class="text-[9px] font-bold px-2 py-0.5 rounded ${rhythm.class}">${rhythm.label}</span>
+        </td>
         <td class="py-3 px-3 text-right whitespace-nowrap">
           <span class="text-base font-bold text-white font-dota bg-slate-900 px-2.5 py-0.5 rounded border border-slate-700">${item.score}</span>
           <div class="mt-1"><span class="text-[9px] font-bold tracking-wider px-2 py-0.5 rounded uppercase ${item.tier.badgeClass}">${item.tier.label}</span></div>
         </td>
         <td class="py-3 px-3 whitespace-nowrap">
-          <div class="font-semibold text-slate-100">${escapeHtml(item.best.name)}</div>
-          <div class="text-[11px] text-slate-500">${formatPositions(item.best.positions)} • ${item.best.score} pts • ${item.best.games}j • ${item.best.winrate.toFixed(0)}% WR</div>
+          <div class="font-semibold text-slate-100">${escapeHtml(best.name)}</div>
+          <div class="text-[11px] text-slate-500">${formatPositions(best.positions)} • ${best.score} pts</div>
         </td>
         <td class="py-3 px-3 text-xs leading-5">${otherPlayers}</td>
       </tr>`;
