@@ -1,0 +1,251 @@
+/* Estilos complementares ao Tailwind CSS para o Analisador de Inimigos Dota 2 */
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --dota-red: #d32f2f;
+  --dota-crimson: #991b1b;
+  --dota-gold: #eab308;
+  --dota-dark-900: #0b0e14;
+  --dota-dark-800: #121722;
+  --dota-dark-700: #1a2232;
+  --dota-dark-600: #242f44;
+  --attr-str: #ef4444;
+  --attr-agi: #10b981;
+  --attr-int: #06b6d4;
+  --attr-all: #a855f7;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #080a0f;
+  color: #e2e8f0;
+  min-height: 100vh;
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(220, 38, 38, 0.12) 0%, transparent 60%),
+    radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+    linear-gradient(to bottom, #090c12 0%, #06070a 100%);
+  background-attachment: fixed;
+}
+
+.font-dota {
+  font-family: 'Rajdhani', sans-serif;
+  letter-spacing: 0.05em;
+}
+
+.font-cinzel {
+  font-family: 'Cinzel', serif;
+}
+
+/* Glassmorphism sutil */
+.glass-panel {
+  background: rgba(18, 24, 36, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.glass-panel-glow {
+  background: rgba(18, 24, 36, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  box-shadow: 0 0 25px rgba(220, 38, 38, 0.12);
+}
+
+.analysis-tab {
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.65);
+}
+
+.analysis-tab:hover {
+  color: #f8fafc;
+  background: rgba(51, 65, 85, 0.7);
+}
+
+.analysis-tab.active {
+  color: #fff;
+  background: linear-gradient(135deg, #b91c1c, #7f1d1d);
+  box-shadow: 0 4px 14px rgba(127, 29, 29, 0.35);
+}
+
+/* Badges de Atributo */
+.badge-str {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.badge-agi {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.badge-int {
+  background: rgba(6, 182, 212, 0.15);
+  color: #67e8f9;
+  border: 1px solid rgba(6, 182, 212, 0.35);
+}
+
+.badge-all {
+  background: rgba(168, 85, 247, 0.15);
+  color: #d8b4fe;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+}
+
+/* Badges de Posições do Dota 2 (Pos 1 a Pos 5) */
+.badge-pos {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap !important;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.2;
+}
+
+.badge-pos-1 {
+  background: rgba(234, 179, 8, 0.18);
+  color: #fde047;
+  border: 1px solid rgba(234, 179, 8, 0.45);
+}
+
+.badge-pos-2 {
+  background: rgba(59, 130, 246, 0.18);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.45);
+}
+
+.badge-pos-3 {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.45);
+}
+
+.badge-pos-4 {
+  background: rgba(168, 85, 247, 0.18);
+  color: #d8b4fe;
+  border: 1px solid rgba(168, 85, 247, 0.45);
+}
+
+.badge-pos-5 {
+  background: rgba(16, 185, 129, 0.18);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+}
+
+/* Tier de Ban */
+.ban-tier-s {
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.25), rgba(153, 27, 27, 0.4));
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  color: #fee2e2;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.25);
+  white-space: nowrap !important;
+  display: inline-block;
+}
+
+.ban-tier-a {
+  background: linear-gradient(135deg, rgba(234, 88, 12, 0.2), rgba(194, 65, 12, 0.3));
+  border: 1px solid rgba(249, 115, 22, 0.5);
+  color: #ffedd5;
+  white-space: nowrap !important;
+  display: inline-block;
+}
+
+.ban-tier-b {
+  background: linear-gradient(135deg, rgba(202, 138, 4, 0.15), rgba(161, 98, 7, 0.25));
+  border: 1px solid rgba(234, 179, 8, 0.4);
+  color: #fef08a;
+  white-space: nowrap !important;
+  display: inline-block;
+}
+
+.ban-tier-c {
+  background: rgba(71, 85, 105, 0.2);
+  border: 1px solid rgba(100, 116, 139, 0.3);
+  color: #cbd5e1;
+  white-space: nowrap !important;
+  display: inline-block;
+}
+
+/* Aspect ratio e imagens oficiais Dota 2 (16:9) */
+.hero-img-widescreen {
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Estilo do scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #090c12;
+}
+::-webkit-scrollbar-thumb {
+  background: #242f44;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #384661;
+}
+
+/* Animação suave para updates de tabela */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Pulse sutil para destaque */
+.pulse-subtle {
+  animation: subtlePulse 2.5s infinite;
+}
+
+@keyframes subtlePulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.45);
+  }
+}
+
+/* Otimização para impressão do relatório do Coach */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #111827 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .glass-panel, .glass-panel-glow {
+    background: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+  table {
+    border-collapse: collapse !important;
+    color: #111827 !important;
+  }
+  th, td {
+    border: 1px solid #e5e7eb !important;
+    color: #111827 !important;
+  }
+}

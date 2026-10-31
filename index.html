@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dota 2 - Analisador de Inimigos & Scouting do Coach</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Fontes do Google -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <!-- Estilos Customizados -->
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dota: {
+              red: '#e13c2b',
+              darkred: '#991b1b',
+              gold: '#c49942',
+              bg: '#080a0f',
+              panel: '#121722',
+              border: '#1e293b'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#080a0f] text-slate-200 antialiased selection:bg-red-600 selection:text-white">
+
+  <!-- Cabeçalho Principal -->
+  <header class="border-b border-slate-800/80 bg-slate-950/80 sticky top-0 z-40 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <!-- Ícone Estilizado Aegis / Dota -->
+        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-red-600 to-red-950 flex items-center justify-center border border-red-500/40 shadow-lg shadow-red-900/30">
+          <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.8l7 3.5v7.4l-7 3.5-7-3.5V8.3l7-3.5z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-xl font-bold font-dota tracking-wider uppercase text-slate-100">
+              Dota 2 Rival Scout
+            </h1>
+            <span class="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded bg-red-950/80 text-red-400 border border-red-800/50">
+              Coach Edition
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">Análise de heróis, histórico recente e score ponderado de confiança</p>
+        </div>
+      </div>
+
+      <!-- Links rápidos / Status -->
+      <div class="hidden sm:flex items-center space-x-4 text-xs text-slate-400">
+        <span class="flex items-center space-x-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>OpenDota API Conectada</span>
+        </span>
+        <span>•</span>
+        <span>Filtro Padrão: <strong>Últimos 9 Meses</strong></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Conteúdo Principal -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <nav class="glass-panel rounded-xl p-1.5 border border-slate-800 shadow-xl no-print flex gap-1" aria-label="Modo de análise">
+      <button id="individual-tab-btn" type="button" class="analysis-tab active flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition">
+        Busca individual
+      </button>
+      <button id="team-tab-btn" type="button" class="analysis-tab flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition">
+        Análise de equipe
+      </button>
+      <button id="rdc-tab-btn" type="button" class="analysis-tab flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition">
+        Times RDC
+      </button>
+    </nav>
+
+    <section id="rdc-tab-content" class="hidden space-y-6">
+      <div class="glass-panel rounded-xl p-5 border border-slate-800 shadow-xl no-print">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-xl font-bold text-white font-dota tracking-wide">Times confirmados da RDC</h2>
+            <p class="text-xs text-slate-400 mt-1">Jogadores agrupados por time. Selecione 5 para enviar à análise de equipe.</p>
+          </div>
+          <div class="flex gap-2 w-full md:w-auto">
+            <input id="rdc-player-filter" type="search" placeholder="Buscar jogador ou time..." class="flex-1 md:w-72 px-3 py-2.5 bg-slate-900/90 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm">
+            <span id="rdc-selection-count" class="px-3 py-2.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-300 whitespace-nowrap">0/5 selecionados</span>
+          </div>
+        </div>
+        <div id="rdc-player-list" class="space-y-3 max-h-[34rem] overflow-y-auto pr-1"></div>
+        <div class="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-t border-slate-800 pt-4">
+          <p id="rdc-selection-message" class="text-xs text-slate-500">Selecione 5 jogadores.</p>
+          <button id="rdc-analyze-btn" type="button" class="px-6 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-semibold rounded-lg shadow-lg shadow-red-900/40 transition text-sm">
+            Analisar seleção
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="team-tab-content" class="hidden space-y-6">
+      <div class="glass-panel rounded-xl p-5 border border-slate-800 shadow-xl no-print">
+        <div class="mb-4">
+          <h2 class="text-xl font-bold text-white font-dota tracking-wide">Scouting do time adversário</h2>
+          <p class="text-xs text-slate-400 mt-1">Informe os cinco Account IDs. A análise mostra bans fortes, jogador principal e heróis flex.</p>
+        </div>
+        <form id="team-search-form" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              Jogador 1
+              <input id="team-nickname-1" type="text" placeholder="Apelido" class="team-nickname-input mt-1.5 w-full px-3 py-2 bg-slate-900/90 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500">
+              <input id="team-id-1" type="text" required placeholder="Friend ID" class="team-id-input mt-1.5 w-full px-3 py-2.5 bg-slate-900/90 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500 font-mono">
+            </label>
+            <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              Jogador 2
+              <input id="team-nickname-2" type="text" placeholder="Apelido" class="team-nickname-input mt-1.5 w-full px-3 py-2 bg-slate-900/90 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500">
+              <input id="team-id-2" type="text" required placeholder="Friend ID" class="team-id-input mt-1.5 w-full px-3 py-2.5 bg-slate-900/90 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500 font-mono">
+            </label>
+            <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              Jogador 3
+              <input id="team-nickname-3" type="text" placeholder="Apelido" class="team-nickname-input mt-1.5 w-full px-3 py-2 bg-slate-900/90 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500">
+              <input id="team-id-3" type="text" required placeholder="Friend ID" class="team-id-input mt-1.5 w-full px-3 py-2.5 bg-slate-900/90 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500 font-mono">
+            </label>
+            <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              Jogador 4
+              <input id="team-nickname-4" type="text" placeholder="Apelido" class="team-nickname-input mt-1.5 w-full px-3 py-2 bg-slate-900/90 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500">
+              <input id="team-id-4" type="text" required placeholder="Friend ID" class="team-id-input mt-1.5 w-full px-3 py-2.5 bg-slate-900/90 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500 font-mono">
+            </label>
+            <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              Jogador 5
+              <input id="team-nickname-5" type="text" placeholder="Apelido" class="team-nickname-input mt-1.5 w-full px-3 py-2 bg-slate-900/90 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500">
+              <input id="team-id-5" type="text" required placeholder="Friend ID" class="team-id-input mt-1.5 w-full px-3 py-2.5 bg-slate-900/90 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500 font-mono">
+            </label>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+            <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              Régua de confiança
+              <select id="team-score-mode" class="mt-1.5 w-full py-2.5 px-3 bg-slate-900/90 border border-slate-700 rounded-lg text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+                <option value="individual">Régua individual (fórmula atual)</option>
+                <option value="strict" selected>Régua de equipe (mais rígida)</option>
+              </select>
+            </label>
+            <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              Janela de recência
+              <select id="team-period-select" class="mt-1.5 w-full py-2.5 px-3 bg-slate-900/90 border border-slate-700 rounded-lg text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+                <option value="3">Últimos 3 meses</option>
+                <option value="6">Últimos 6 meses</option>
+                <option value="9" selected>Últimos 9 meses</option>
+                <option value="12">Últimos 12 meses</option>
+                <option value="36">Últimos 3 anos</option>
+              </select>
+            </label>
+            <button type="submit" id="team-search-btn" class="px-6 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-semibold rounded-lg shadow-lg shadow-red-900/40 transition text-sm">
+              <span id="team-search-btn-text">Analisar equipe</span>
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-500">A régua de equipe só marca como prioridade os heróis com evidência forte e confiança combinada alta.</p>
+        </form>
+        <div id="team-error-message" class="hidden mt-4 p-3.5 rounded-lg bg-red-950/40 border border-red-800 text-red-200 text-sm"></div>
+      </div>
+
+      <div id="team-empty-state" class="glass-panel rounded-xl p-8 border border-slate-800 text-center">
+        <h2 class="text-lg font-bold text-slate-100 font-dota tracking-wide">Aguardando os cinco jogadores</h2>
+        <p class="text-sm text-slate-400 mt-2">Preencha os IDs para identificar bans fortes e heróis flex do time.</p>
+      </div>
+
+      <div id="team-results" class="hidden space-y-6">
+        <section class="glass-panel rounded-xl p-5 border border-slate-800">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+            <div>
+              <h2 class="text-lg font-bold text-white font-dota tracking-wide">Principais bans do time</h2>
+              <p id="team-results-subtitle" class="text-xs text-slate-400 mt-1"></p>
+            </div>
+            <span class="text-xs text-amber-300 bg-amber-950/40 border border-amber-800/50 rounded px-2 py-1">Prioridade baseada em confiança</span>
+          </div>
+          <div id="team-bans-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
+        </section>
+        <section class="glass-panel rounded-xl border border-slate-800 overflow-hidden">
+          <div class="p-5 pb-3">
+            <h2 class="text-lg font-bold text-white font-dota tracking-wide">Heróis compartilhados e flex</h2>
+            <p class="text-xs text-slate-400 mt-1">Cada jogador aparece com função e confiança na fórmula individual.</p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-900/90 border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  <th class="py-3 px-3 text-center w-12">#</th>
+                  <th class="py-3 px-3">Herói</th>
+                  <th class="py-3 px-3 text-right">Confiança do time</th>
+                  <th class="py-3 px-3">Jogadores, função e confiança</th>
+                </tr>
+              </thead>
+              <tbody id="team-flex-table" class="divide-y divide-slate-800/50"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <div id="individual-tab-content" class="space-y-6">
+
+    <!-- Caixa de Entrada de Dados (Search Box) -->
+    <section class="glass-panel rounded-xl p-5 border border-slate-800 shadow-xl no-print">
+      <form id="search-form" class="space-y-4">
+        <div class="flex flex-col md:flex-row gap-3 items-stretch md:items-end">
+          
+          <!-- Input Account ID -->
+          <div class="flex-1">
+            <label for="account-id-input" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+              Account ID do Jogador Adversário <span class="text-red-400">*</span>
+              <span class="text-[11px] text-slate-400 font-normal lowercase">(Friend ID do Dota / SteamID32)</span>
+            </label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+              </div>
+              <input 
+                type="text" 
+                id="account-id-input" 
+                placeholder="Ex: 70388657 (ou cole o link do Dotabuff / OpenDota)" 
+                class="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition text-sm font-mono"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Seletor de Janela de Recência -->
+          <div class="w-full md:w-44">
+            <label for="period-select" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+              Janela de Recência
+            </label>
+            <select id="period-select" class="w-full py-2.5 px-3 bg-slate-900/90 border border-slate-700 rounded-lg text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+              <option value="3">Últimos 3 Meses</option>
+              <option value="6">Últimos 6 Meses</option>
+              <option value="9" selected>Últimos 9 Meses (Recomendado)</option>
+              <option value="12">Últimos 12 Meses</option>
+              <option value="36">Últimos 3 Anos</option>
+            </select>
+          </div>
+
+          <!-- Limite de Partidas -->
+          <div class="w-full md:w-36">
+            <label for="limit-select" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+              Amostra Máx.
+            </label>
+            <select id="limit-select" class="w-full py-2.5 px-3 bg-slate-900/90 border border-slate-700 rounded-lg text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+              <option value="100">100 Partidas</option>
+              <option value="200" selected>200 Partidas (Recomendado)</option>
+              <option value="300">300 Partidas</option>
+              <option value="500">500 Partidas</option>
+            </select>
+          </div>
+
+          <!-- Tipo de Partida (Ranked vs Ligas DECAN/RDC) -->
+          <div class="w-full md:w-48">
+            <label for="lobby-select" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+              Tipo de Partida
+            </label>
+            <select id="lobby-select" class="w-full py-2.5 px-3 bg-slate-900/90 border border-slate-700 rounded-lg text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+              <option value="all" selected>Todas (Ranked + Ligas)</option>
+              <option value="tournament">🏆 Ligas & Torneios (DECAN/RDC)</option>
+              <option value="ranked">⚔️ Apenas Ranked</option>
+            </select>
+          </div>
+
+          <!-- Botão Consultar -->
+          <div>
+            <button 
+              type="submit" 
+              id="search-btn"
+              class="w-full md:w-auto px-6 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-semibold rounded-lg shadow-lg shadow-red-900/40 flex items-center justify-center space-x-2 transition duration-200 cursor-pointer text-sm"
+            >
+              <svg id="loading-spinner" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span id="search-btn-text">Consultar Jogador</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Opções Rápidas de Algoritmo & Testes -->
+        <div class="pt-2 border-t border-slate-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs">
+          <!-- Checkbox Superior de Inatividade -->
+          <label class="flex items-center space-x-2 cursor-pointer select-none text-slate-300 hover:text-white transition">
+            <input type="checkbox" id="penalize-inactive-search-toggle" checked class="w-4 h-4 rounded text-red-600 bg-slate-800 border-slate-600 focus:ring-red-500 cursor-pointer">
+            <span class="font-medium flex items-center space-x-1.5">
+              <span>🔥 Priorizar Ritmo Recente</span>
+              <span class="text-slate-500">•</span>
+              <span class="text-amber-400/90 font-normal">Penalizar heróis parados há meses (evita falsos bans em heróis abandonados)</span>
+            </span>
+          </label>
+
+          <!-- Sugestões de teste rápido -->
+          <div class="flex flex-wrap items-center gap-1.5 text-slate-400">
+            <span class="font-medium text-slate-500">Testar:</span>
+            <button type="button" class="sample-player-btn px-2 py-0.5 rounded bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition" data-id="70388657">
+              Dendi
+            </button>
+            <button type="button" class="sample-player-btn px-2 py-0.5 rounded bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition" data-id="86745912">
+              Arteezy
+            </button>
+            <button type="button" class="sample-player-btn px-2 py-0.5 rounded bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition" data-id="94054712">
+              Topson
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Mensagem de Erro (oculta por padrão) -->
+      <div id="error-message" class="hidden mt-4 p-3.5 rounded-lg bg-red-950/40 border border-red-800 text-red-200 text-sm flex items-center space-x-3">
+        <!-- preenchido via JS -->
+      </div>
+    </section>
+
+    <!-- Estado Inicial / Vazio (quando não há busca realizada) -->
+    <div id="empty-state" class="glass-panel rounded-xl p-8 border border-slate-800 text-center space-y-4">
+      <div class="w-16 h-16 mx-auto rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+      </div>
+      <div class="max-w-xl mx-auto space-y-2">
+        <h2 class="text-lg font-bold text-slate-100 font-dota tracking-wide">Aguardando Consulta do Adversário</h2>
+        <p class="text-sm text-slate-400">
+          Insira o <strong>Friend ID</strong> do jogador no campo acima para gerar o relatório com 
+          os heróis mais jogados, taxas de vitória e o <strong>Score de Confiança</strong> nos últimos 9 meses.
+        </p>
+      </div>
+
+      <!-- Guia dos 3 Pilares do Score de Confiança -->
+      <div class="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 text-left">
+        <div class="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800">
+          <div class="text-red-400 font-bold text-sm mb-1">1. Volume Ponderado</div>
+          <p class="text-xs text-slate-400">Heróis com apenas 1 ou 2 jogos são penalizados para evitar falsos positivos com 100% de winrate.</p>
+        </div>
+        <div class="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800">
+          <div class="text-amber-400 font-bold text-sm mb-1">2. Winrate Real</div>
+          <p class="text-xs text-slate-400">Taxa de vitória proporcional nos últimos 9 meses, ponderando se o adversário realmente ganha partidas.</p>
+        </div>
+        <div class="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800">
+          <div class="text-emerald-400 font-bold text-sm mb-1">3. Fator de Recência</div>
+          <p class="text-xs text-slate-400">Partidas jogadas esta semana ou este mês pesam significativamente mais que partidas de 8 meses atrás.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard Principal (Exibido após carregar dados) -->
+    <div id="dashboard-content" class="hidden space-y-6">
+
+      <!-- Topo: Perfil do Jogador & Links -->
+      <section class="glass-panel rounded-xl p-5 border border-slate-800 shadow-lg">
+        <div class="flex flex-col md:flex-row items-center md:items-start justify-between gap-4">
+          
+          <div class="flex items-center space-x-4">
+            <img id="profile-avatar" src="" alt="Avatar" class="w-16 h-16 rounded-xl border-2 border-slate-700 shadow-md object-cover bg-slate-800">
+            <div>
+              <div class="flex items-center space-x-2">
+                <h2 id="profile-name" class="text-xl font-bold text-white font-dota tracking-wide"></h2>
+                <div id="profile-rank" class="text-xs"></div>
+              </div>
+              <div class="text-xs text-slate-400 mt-1 flex items-center space-x-3">
+                <span id="profile-steamid" class="font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-800"></span>
+                <span>•</span>
+                <span class="text-slate-300">Histórico de Partidas Público</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Links de Perfil & Ações Rápidas -->
+          <div class="flex flex-wrap items-center gap-2 text-xs no-print">
+            <a id="link-dotabuff" href="#" target="_blank" class="px-3 py-1.5 rounded-lg bg-red-950/60 hover:bg-red-900/80 text-red-200 border border-red-800/60 flex items-center space-x-1.5 transition">
+              <span>Dotabuff</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            </a>
+            <a id="link-opendota" href="#" target="_blank" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center space-x-1.5 transition">
+              <span>OpenDota</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            </a>
+            <a id="link-stratz" href="#" target="_blank" class="px-3 py-1.5 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-200 border border-indigo-800/60 flex items-center space-x-1.5 transition">
+              <span>STRATZ</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            </a>
+            <a id="link-steam" href="#" target="_blank" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 border border-slate-800 flex items-center space-x-1.5 transition hidden">
+              <span>Steam</span>
+            </a>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- 4 Cards de Resumo Rápido para o Coach (Grid Otimizado) -->
+      <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-4">
+        
+        <!-- Card 1: Recomendações de Ban (Maior largura para acomodar os 3 heróis) -->
+        <div class="glass-panel-glow rounded-xl p-4 border border-red-900/40 relative overflow-hidden xl:col-span-5 md:col-span-2 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold uppercase tracking-wider text-red-400 flex items-center space-x-1.5">
+                <span>🚫 Sugestão de Bans</span>
+              </span>
+              <span class="text-[10px] text-slate-400 bg-red-950/80 px-2 py-0.5 rounded border border-red-900/50 whitespace-nowrap">Top Confiança</span>
+            </div>
+            <div id="summary-bans-list" class="space-y-2">
+              <!-- preenchido via JS -->
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-2.5 pt-2 border-t border-red-950/40">
+            Heróis recomendados para anular no primeiro draft pelo nível de perigo.
+          </p>
+        </div>
+
+        <!-- Card 2: Mais Spammado -->
+        <div class="glass-panel rounded-xl p-4 border border-slate-800 flex flex-col justify-between xl:col-span-2 md:col-span-1">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center space-x-1.5 whitespace-nowrap">
+                <span>🎯 Mais Spammado</span>
+              </span>
+              <span class="text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded whitespace-nowrap">Volume</span>
+            </div>
+            <div id="top-spammed-hero" class="mt-1">
+              <!-- preenchido via JS -->
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-800/80">
+            Herói de maior conforto e repetição nos últimos 9 meses.
+          </p>
+        </div>
+
+        <!-- Card 3: Maior Winrate Relevante -->
+        <div class="glass-panel rounded-xl p-4 border border-slate-800 flex flex-col justify-between xl:col-span-2 md:col-span-1">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center space-x-1.5 whitespace-nowrap">
+                <span>🔥 Maior Winrate</span>
+              </span>
+              <span class="text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded whitespace-nowrap">Mín. 3 Jogos</span>
+            </div>
+            <div id="top-winrate-hero" class="mt-1">
+              <!-- preenchido via JS -->
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-800/80">
+            Herói com maior eficiência de vitórias no período.
+          </p>
+        </div>
+
+        <!-- Card 4: Panorama Geral -->
+        <div class="glass-panel rounded-xl p-4 border border-slate-800 flex flex-col justify-between xl:col-span-3 md:col-span-2">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold uppercase tracking-wider text-sky-400 flex items-center space-x-1.5 whitespace-nowrap">
+                <span>📊 Panorama Recente</span>
+              </span>
+              <span class="text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded whitespace-nowrap">9 Meses</span>
+            </div>
+            <div id="period-overview-stats">
+              <!-- preenchido via JS -->
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-800/80">
+            Volume e versatilidade geral de pool do jogador.
+          </p>
+        </div>
+
+      </section>
+
+      <!-- Barra de Ferramentas da Tabela (Filtros de Posição 1-5 & Exportações) -->
+      <section class="glass-panel rounded-xl p-4 border border-slate-800 space-y-3 no-print">
+        
+        <!-- Linha 1: Seletor Rápido de Posições (1 a 5) com Pills Estilizadas -->
+        <div class="flex flex-wrap items-center justify-between gap-2.5 pb-2.5 border-b border-slate-800/80">
+          <div class="flex items-center space-x-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 font-dota">Filtrar por Posição:</span>
+            <div id="position-pills" class="flex flex-wrap items-center gap-1.5">
+              <button type="button" class="pos-pill-btn px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer bg-red-600 text-white shadow-sm" data-pos="all">
+                Todas
+              </button>
+              <button type="button" class="pos-pill-btn px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer bg-slate-900 hover:bg-slate-800 text-yellow-300 border border-yellow-500/30" data-pos="1">
+                👑 Pos 1 (Carry)
+              </button>
+              <button type="button" class="pos-pill-btn px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer bg-slate-900 hover:bg-slate-800 text-blue-300 border border-blue-500/30" data-pos="2">
+                ⚡ Pos 2 (Mid)
+              </button>
+              <button type="button" class="pos-pill-btn px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer bg-slate-900 hover:bg-slate-800 text-rose-300 border border-rose-500/30" data-pos="3">
+                🛡️ Pos 3 (Offlane)
+              </button>
+              <button type="button" class="pos-pill-btn px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer bg-slate-900 hover:bg-slate-800 text-purple-300 border border-purple-500/30" data-pos="4">
+                🎯 Pos 4 (Soft Sup)
+              </button>
+              <button type="button" class="pos-pill-btn px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer bg-slate-900 hover:bg-slate-800 text-emerald-300 border border-emerald-500/30" data-pos="5">
+                🩸 Pos 5 (Hard Sup)
+              </button>
+            </div>
+          </div>
+          <span id="table-count-badge" class="text-xs text-slate-400 font-medium"></span>
+        </div>
+
+        <!-- Linha 2: Busca por nome, Atributo, Mínimo de Partidas e Exportações -->
+        <div class="flex flex-col md:flex-row items-center justify-between gap-3">
+          
+          <!-- Filtros Adicionais -->
+          <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+            <!-- Busca por nome de herói -->
+            <div class="relative w-full sm:w-44">
+              <input 
+                type="text" 
+                id="table-search-input" 
+                placeholder="Buscar herói..." 
+                class="w-full pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+              />
+              <svg class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </div>
+
+            <!-- Filtro de Atributo -->
+            <select id="attr-filter-select" class="py-1.5 px-2.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300 focus:outline-none">
+              <option value="all">Todos Atributos</option>
+              <option value="str">Força (STR)</option>
+              <option value="agi">Agilidade (AGI)</option>
+              <option value="int">Inteligência (INT)</option>
+              <option value="all">Universal (UNI)</option>
+            </select>
+
+            <!-- Filtro de Mínimo de Partidas -->
+            <select id="min-games-select" class="py-1.5 px-2.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300 focus:outline-none">
+              <option value="1">Mín. 1 partida</option>
+              <option value="2">Mín. 2 partidas</option>
+              <option value="3">Mín. 3 partidas</option>
+              <option value="5" selected>Mín. 5 partidas (Recomendado)</option>
+              <option value="8">Mín. 8 partidas</option>
+            </select>
+
+            <!-- Toggle de Penalizar Inativos / Ritmo Recente -->
+            <label class="flex items-center space-x-1.5 cursor-pointer select-none bg-slate-900 border border-slate-700 hover:border-slate-600 px-2.5 py-1.5 rounded-lg transition" title="Penaliza fortemente heróis sem partidas recentes (ex: jogados há mais de 2-3 meses)">
+              <input type="checkbox" id="penalize-inactive-table-toggle" checked class="w-3.5 h-3.5 rounded text-red-600 bg-slate-800 border-slate-600 focus:ring-red-500 cursor-pointer">
+              <span class="text-xs font-semibold text-slate-200 whitespace-nowrap flex items-center space-x-1">
+                <span>🔥 Priorizar Ritmo</span>
+              </span>
+            </label>
+          </div>
+
+          <!-- Botões de Ação / Exportação à Direita -->
+          <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
+            <button 
+              type="button" 
+              id="copy-discord-btn"
+              class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs flex items-center space-x-1.5 transition shadow-sm cursor-pointer whitespace-nowrap"
+              title="Copia um resumo pronto para colar no chat do time"
+            >
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+              <span>Copiar para Discord/WhatsApp</span>
+            </button>
+
+            <button 
+              type="button" 
+              id="export-csv-btn"
+              class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs flex items-center space-x-1.5 transition border border-slate-700 cursor-pointer whitespace-nowrap"
+              title="Baixar planilha CSV para o Excel"
+            >
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              <span>CSV</span>
+            </button>
+
+            <button 
+              type="button" 
+              id="print-report-btn"
+              class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs flex items-center space-x-1.5 transition border border-slate-700 cursor-pointer"
+              title="Imprimir relatório do Coach"
+            >
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            </button>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- Tabela Principal de Ranking de Confiança -->
+      <section class="glass-panel rounded-xl border border-slate-800 overflow-hidden shadow-2xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-900/90 border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider select-none">
+                <th class="py-3 px-3 text-center w-12 cursor-pointer hover:text-white" data-sort="score">
+                  # <span class="sort-indicator text-red-400 font-bold">↓</span>
+                </th>
+                <th class="py-3 px-3 cursor-pointer hover:text-white" data-sort="name">
+                  Herói <span class="sort-indicator text-slate-600">↕</span>
+                </th>
+                <th class="py-3 px-3 text-center cursor-pointer hover:text-white" data-sort="games">
+                  Partidas (9M) <span class="sort-indicator text-slate-600">↕</span>
+                </th>
+                <th class="py-3 px-3 text-center cursor-pointer hover:text-white" data-sort="wins">
+                  V / D <span class="sort-indicator text-slate-600">↕</span>
+                </th>
+                <th class="py-3 px-3 text-center cursor-pointer hover:text-white w-36" data-sort="winrate">
+                  Winrate (%) <span class="sort-indicator text-slate-600">↕</span>
+                </th>
+                <th class="py-3 px-3 text-center cursor-pointer hover:text-white" data-sort="recency">
+                  Recência <span class="sort-indicator text-slate-600">↕</span>
+                </th>
+                <th class="py-3 px-3 text-right cursor-pointer hover:text-white w-40" data-sort="score">
+                  Score de Confiança <span class="sort-indicator text-slate-600">↕</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="heroes-table-body" class="divide-y divide-slate-800/50">
+              <!-- preenchido dinamicamente via JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Explicação da Fórmula de Confiança para o Coach -->
+      <section class="p-4 rounded-xl bg-slate-900/40 border border-slate-800/80 text-xs text-slate-400 space-y-1.5 no-print">
+        <div class="font-semibold text-slate-300 flex items-center space-x-1.5">
+          <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>Como o Score de Confiança é calculado:</span>
+        </div>
+        <p class="leading-relaxed">
+          O cálculo utiliza um modelo quadrático de saturação estatística ($N^2 / (N^2 + 18)$) que penaliza agressivamente amostras casuais (heróis com 1 ou 2 jogos nunca atingem status de perigo de Ban), 
+          combinado com a <strong>Taxa de Vitória Ponderada</strong>, <strong>Recência Temporal</strong> (partidas recentes têm peso até 1.0x, decaindo até 0.40x) e a <strong>Frequência no Pool</strong> do adversário. 
+          Bans Urgentes (Tier S) exigem volume mínimo de pelo menos 6 partidas e winrate positivo consistente.
+        </p>
+      </section>
+
+    </div>
+
+    </div>
+  </main>
+
+  <!-- Modal de Partidas Detalhadas do Herói -->
+  <div id="matches-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm no-print">
+    <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-2xl w-full p-5 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div id="modal-hero-header">
+          <!-- preenchido via JS -->
+        </div>
+        <button id="close-modal-btn" class="text-slate-400 hover:text-white p-1 rounded-lg bg-slate-800 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="text-xs text-slate-400 font-medium">
+        Histórico das partidas analisadas com este herói:
+      </div>
+
+      <div id="modal-matches-list" class="space-y-2 overflow-y-auto pr-1 flex-1">
+        <!-- preenchido via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Fallback de Heróis Offline / Pré-carregado -->
+  <script src="heroes-data.js"></script>
+  <script src="rdc-players.js"></script>
+  <!-- Lógica Principal da Aplicação -->
+  <script src="app.js"></script>
+</body>
+</html>
