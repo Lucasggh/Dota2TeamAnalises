@@ -157,6 +157,16 @@
                 <option value="36">Últimos 3 anos</option>
               </select>
             </label>
+            <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              Amostra por jogador
+              <select id="team-limit-select" class="mt-1.5 w-full py-2.5 px-3 bg-slate-900/90 border border-slate-700 rounded-lg text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+                <option value="100">100 partidas</option>
+                <option value="200" selected>200 partidas</option>
+                <option value="300">300 partidas</option>
+                <option value="400">400 partidas</option>
+                <option value="500">500 partidas</option>
+              </select>
+            </label>
             <button type="submit" id="team-search-btn" class="px-6 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-semibold rounded-lg shadow-lg shadow-red-900/40 transition text-sm">
               <span id="team-search-btn-text">Analisar equipe</span>
             </button>

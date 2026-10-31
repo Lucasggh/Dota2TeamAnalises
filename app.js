@@ -30,6 +30,7 @@ const teamState = {
   heroes: [],
   scoreMode: 'strict',
   months: 9,
+  matchesLimit: 200,
   loading: false
 };
 
@@ -449,6 +450,7 @@ async function handleSearch() {
     }
 
     teamState.months = parseFloat(document.getElementById('team-period-select').value);
+    teamState.matchesLimit = parseInt(document.getElementById('team-limit-select').value, 10);
     teamState.scoreMode = document.getElementById('team-score-mode').value;
     setTeamLoading(true);
     error.classList.add('hidden');
@@ -457,7 +459,7 @@ async function handleSearch() {
       const players = await Promise.all(ids.map(async (accountId, index) => {
         const [profileRes, matchesRes] = await Promise.all([
           fetch(`https://api.opendota.com/api/players/${accountId}`),
-          fetch(`https://api.opendota.com/api/players/${accountId}/matches?limit=${state.matchesLimit}`)
+            fetch(`https://api.opendota.com/api/players/${accountId}/matches?limit=${teamState.matchesLimit}`)
         ]);
         if (!profileRes.ok || !matchesRes.ok) {
           throw new Error(`Não foi possível consultar o jogador ${index + 1} (${accountId}).`);
@@ -544,7 +546,7 @@ async function handleSearch() {
 
     const modeLabel = teamState.scoreMode === 'strict' ? 'Régua de equipe rígida' : 'Régua individual';
     document.getElementById('team-results-subtitle').textContent =
-      `${modeLabel} • ${teamState.players.length} jogadores • Últimos ${teamState.months} meses`;
+      `${modeLabel} • ${teamState.players.length} jogadores • Até ${teamState.matchesLimit} partidas por jogador • Últimos ${teamState.months} meses`;
 
     const bansList = document.getElementById('team-bans-list');
     const topHeroes = heroes.slice(0, 9);
